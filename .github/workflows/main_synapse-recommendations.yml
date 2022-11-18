@@ -1,37 +1,36 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy Node.js app to Azure Web App - synapse-recommendations
+name: Build and deploy SR to Azure Web App
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  push: [ main ]
+  pull: [ main ]
 
 jobs:
   build:
+    name: Build frontend and load backend
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
-
-      - name: Set up Node.js version
-        uses: actions/setup-node@v1
+      - uses: actions/setup-node@v1
         with:
           node-version: '18.x'
-
-      - name: npm install, build, and test
+      
+      - name: Build frontend
         run: |
+          cd frontend
+          npm install 
+          npm run build
+          cd ..
+      - name: Load backend
+        run: |
+          cd backend
           npm install
-          npm run build --if-present
-          npm run test --if-present
-
+          cd ..
+      
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v2
         with:
-          name: node-app
-          path: .
+          name: SR-BE-PROD
+          path: ./backend
 
   deploy:
     runs-on: ubuntu-latest
@@ -44,7 +43,7 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v2
         with:
-          name: node-app
+          name: SR-BE-PROD
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
