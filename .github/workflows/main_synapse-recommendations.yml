@@ -1,8 +1,12 @@
 name: Build and deploy SR to Azure Web App
 
 on:
-  push: [ main ]
-  pull: [ main ]
+  push:
+    branches:
+      - main
+  pull:
+    branches:
+      - main
 
 jobs:
   build:
