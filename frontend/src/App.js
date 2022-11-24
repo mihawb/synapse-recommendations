@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react'
+import 'bootstrap/dist/css/bootstrap.min.css';
 // import axios from 'axios'
 import config from './config'
 import './App.css';
 import Username from './Username';
+import SongsList from './SongsList';
+import Nav from 'react-bootstrap/Nav';
+import Button from 'react-bootstrap/Button';
+
 
 function App() {
   const [token, setToken] = useState('null')
@@ -20,11 +25,8 @@ function App() {
 
   useEffect(() => {
     const hash = window.location.hash
-    console.log(hash !== '')
     let token = window.localStorage.getItem('token')
 
-    // token w location => token z location
-    // token nie w location & token w local => token z local
 
     if (hash) {
       token = hash.substring(1).split('&').find(elem => elem.startsWith('access_token')).split('=')[1]
@@ -32,7 +34,6 @@ function App() {
 
     window.location.hash = ''
     window.localStorage.setItem('token', token)
-
     setToken(token)
 
   }, [])
@@ -40,15 +41,19 @@ function App() {
   return (
     <div className='App'>
       <header className='App-header'>
-        <h1>Spotify React</h1>
+      <Nav className='mt-2 mb-6 align-self-lg-start' fill bg="dark" style= {{width: "100%"}}>
+        <Nav.Item className='d-flex justify-content-start ms-4 col-1' >React-Bootstrap</Nav.Item>
+        <Nav.Item className='d-flex justify-content-start col-7'>
+        { token !==  'null' && token !== null ?<Username authkey={token} /> : <></>}
+        </Nav.Item>
+        <Nav.Item className='d-flex justify-content-end me-5 col-1'>
+          {token === 'null' || token === null ?
+           <Button variant="primary" href={accAuthUrl} >Log in</Button> :
+            <Button variant="primary" onClick={logout}>Logout</Button>}
+        </Nav.Item>
+    </Nav>
 
-        {token !==  'null' ? <Username authkey={token} /> : <></>}
-
-        {token === 'null' ?
-          <a href={accAuthUrl}>Login to Spotify</a>
-          : <button onClick={logout}>Logout</button>
-        }
-
+        { token !==  'null' && token !== null ?<SongsList authkey={token}/> : <></>}
       </header>
     </div>
   );
