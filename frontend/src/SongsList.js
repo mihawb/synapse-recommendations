@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import Song from './Song'
-import Table from 'react-bootstrap/Table';
+import Row from 'react-bootstrap/Row';
 
 function SongsList(props) {
   const [songs, setSongs] = useState([])
@@ -21,21 +21,18 @@ function SongsList(props) {
     fetchSongs()
   }, [props.authkey])
 
+  let generateRows = (n) => {
+    let i = 0;
+    let rows = [];
+    while(i<songs.length) {
+      rows.push(songs.slice(i,i+n))
+      i = i + n
+    }
+    return rows.map( row => <Row className="g-4 mb-4">{row}</Row>)
+  }
+
   return (
-
-    <Table className='mt-5' bordered striped variant="dark" responsive >
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Artist</th>
-            </tr>
-        </thead>
-        <tbody>
-            {songs}
-        </tbody>
-    </Table>
-
+    <>{generateRows(4)}</>
   )
 }
 

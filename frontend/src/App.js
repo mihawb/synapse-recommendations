@@ -41,8 +41,8 @@ function App() {
   return (
     <div className='App'>
       <header className='App-header'>
-      <Nav className='mt-2 mb-6 align-self-lg-start' fill bg="dark" style= {{width: "100%"}}>
-        <Nav.Item className='d-flex justify-content-start ms-4 col-1' >React-Bootstrap</Nav.Item>
+      <Nav className='mt-4 mb-5 align-self-lg-start' fill bg="dark" style= {{width: "100%"}}>
+        <Nav.Item className='d-flex justify-content-start ms-4 col-3' >Spotify Recommendations</Nav.Item>
         <Nav.Item className='d-flex justify-content-start col-7'>
         { token !==  'null' && token !== null ?<Username authkey={token} /> : <></>}
         </Nav.Item>
@@ -53,7 +53,7 @@ function App() {
         </Nav.Item>
     </Nav>
 
-        { token !==  'null' && token !== null ?<SongsList authkey={token}/> : <></>}
+        { token !==  'null' && token !== null ? <SongsList authkey={token}/> : <></>}
       </header>
     </div>
   );
