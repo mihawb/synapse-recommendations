@@ -6,7 +6,6 @@ function Username(props) {
 
   useEffect(() => {
     const fetchUsername = async () => {
-      console.log('sdfgfg')
       const { data } = await axios.get('https://api.spotify.com/v1/me/', {
         headers: {
           Authorization: `Bearer ${props.authkey}`
@@ -19,7 +18,7 @@ function Username(props) {
   }, [props.authkey])
 
   return (
-    <h1>logged in as {username}</h1>
+    <>{username}</>
   )
 }
 
