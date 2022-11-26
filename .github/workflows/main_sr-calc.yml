@@ -12,7 +12,7 @@ on:
 
 env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: './functions'
-  PYTHON_VERSION: '3.9' # set this to the python version to use (supports 3.6, 3.7, 3.8)
+  PYTHON_VERSION: '3.9'
 
 jobs:
   build:
@@ -36,15 +36,13 @@ jobs:
         run: |
           cd ./functions
           pip install -r requirements.txt
-        
-      # Optional: Add step to run tests here
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v2
         with:
           name: python-app
           path: |
-            . 
+            ./functions 
             !venv/
 
   deploy:
