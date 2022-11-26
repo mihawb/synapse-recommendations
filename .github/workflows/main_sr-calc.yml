@@ -69,3 +69,5 @@ jobs:
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_ABA042B33A0D4140954A8C7C6195D7CE }}
           scm-do-build-during-deployment: true
           enable-oryx-build: true
+          FUNC_TO_DB_CONNECTION_STRING: ${{ secrets.FUNC_TO_DB_CONNECTION_STRING }}
+
