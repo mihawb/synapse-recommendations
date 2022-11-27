@@ -21,3 +21,17 @@
 	font-size: small;
 	opacity: 50%;
 }
+a {
+	cursor: pointer;
+}
+a.nostyle:link {
+    text-decoration: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+a.nostyle:visited {
+    text-decoration: inherit;
+    color: inherit;
+    cursor: pointer;
+}
