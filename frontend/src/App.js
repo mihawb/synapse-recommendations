@@ -55,7 +55,7 @@ function App() {
         // rozdzielamy i dla kazdego ID odpytujemy api spotify
         // czyli nizej nie currIDs tyllko neuIDs
 
-        const { data } = await axios.get('http://localhost:7071/api/CalcRecommendations', {
+        const { data } = await axios.get('https://sr-calc.azurewebsites.net/api/CalcRecommendations', {
           headers: { "Access-Control-Allow-Origin": "*" },
           params: { ids: currentIDs }
         })
