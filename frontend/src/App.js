@@ -47,10 +47,7 @@ function App() {
   useEffect(() => {
     const getSpotifySongList = async () => {
       if (listType === 'recs') {
-        const currentIDs = songsData.map(s => s.id) // .join(',')
-
-        console.log(currentIDs.join(','))
-        console.log(token)
+        const currentIDs = songsData.map(s => s.id).join(',')
 
         // tutaj tworzenie zapytania z currIDs concat + token 
         // odpytanie funkcji
@@ -58,8 +55,13 @@ function App() {
         // rozdzielamy i dla kazdego ID odpytujemy api spotify
         // czyli nizej nie currIDs tyllko neuIDs
 
+        const { data } = await axios.get('http://localhost:7071/api/CalcRecommendations', {
+          headers: { "Access-Control-Allow-Origin": "*" },
+          params: { ids: currentIDs }
+        })
+
         const res = []
-        for (const ID of currentIDs) {
+        for (const ID of data) {
           const { data } = await axios.get(`https://api.spotify.com/v1/tracks/${ID}`, {
           headers: { Authorization: `Bearer ${token}` }
           })
@@ -86,8 +88,8 @@ function App() {
         setListLoaded(true)
       }
     }
-    getSpotifySongList()
-  }, [token, listType]) // songsData should NOT be included in dependency array
+    getSpotifySongList()            // eslint-disable-next-line
+  }, [token, listType, listLoaded]) // songsData should NOT be included in dependency array
 
   return (
     <div className='App'>
