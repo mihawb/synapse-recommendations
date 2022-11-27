@@ -1,0 +1,18 @@
+.song-list-outer {
+	border: 1px solid #49505e;
+	border-radius: 20px;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	margin: 10px;
+}
+
+.song-list-inner {
+	flex-grow: 1;
+	/* border: yellow 1px solid; */
+	overflow: hidden;
+}
+
+.song-list-title {
+	margin-left: 10px;
+}

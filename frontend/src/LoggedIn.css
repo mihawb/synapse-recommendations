@@ -1,0 +1,45 @@
+.logged-in-outer {
+	margin: 0;
+	padding: 0;
+	height: 100vh;
+	width: 100%;
+
+	display: flex;
+  	flex-flow: column;
+
+
+  	/* align-items: center;
+  	justify-content: center; */
+	/* overflow: auto; */
+}
+
+.logo-n-login {
+	/* width: 100%; */
+	padding: 10px;
+	/* border: green 1px solid; */
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.logo {
+	margin: 0;
+}
+
+.logged-in-inner {
+	flex-grow: 1;
+	/* border: yellow 1px solid; */
+	display: flex;
+}
+
+.spacer {
+	height: 25px;
+}
+
+.navbar {
+	/* border: 1px solid red; */
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 300px;
+}

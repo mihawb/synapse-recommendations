@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react'
-import 'bootstrap/dist/css/bootstrap.min.css';
-// import axios from 'axios'
+import axios from 'axios'
 import config from './config'
-import './App.css';
-import Username from './Username';
-import SongsList from './SongsList';
-import Nav from 'react-bootstrap/Nav';
-import Button from 'react-bootstrap/Button';
+import './App.css'
+import LoggedOut from './LoggedOut'
+import LoggedIn from './LoggedIn'
+
 
 
 function App() {
   const [token, setToken] = useState('null')
+  const [listType, setListType] = useState('tops') // tops, hist, recs
+  const [listLoaded, setListLoaded] = useState(false)
+  const [songsData, setSongsData] = useState([])
 
   const accAuthUrl = config.auth_endpoint + '?' +
     'client_id=' + config.client_id +
@@ -21,6 +22,11 @@ function App() {
   const logout = () => {
     setToken('null')
     window.localStorage.removeItem('token')
+  }
+
+  const changeList = (list) => {
+    setListLoaded(false)
+    setListType(list)
   }
 
   useEffect(() => {
@@ -38,25 +44,68 @@ function App() {
 
   }, [])
 
+  useEffect(() => {
+    const getSpotifySongList = async () => {
+      if (listType === 'recs') {
+        const currentIDs = songsData.map(s => s.id).join(',')
+
+        // tutaj tworzenie zapytania z currIDs concat + token 
+        // odpytanie funkcji
+        // dostajemy z powrotem tez IDs concat z przecinkami jak wyzej
+        // rozdzielamy i dla kazdego ID odpytujemy api spotify
+        // czyli nizej nie currIDs tyllko neuIDs
+
+        const { data } = await axios.get('http://localhost:7071/api/CalcRecommendations', {
+          headers: { "Access-Control-Allow-Origin": "*" },
+          params: { ids: currentIDs }
+        })
+
+        const res = []
+        for (const ID of data) {
+          const { data } = await axios.get(`https://api.spotify.com/v1/tracks/${ID}`, {
+          headers: { Authorization: `Bearer ${token}` }
+          })
+          res.push(data)
+        }
+        setSongsData(res)
+        setListLoaded(true)
+      }
+      else if (listType === 'tops') {
+        const { data } = await axios.get('https://api.spotify.com/v1/me/top/tracks', {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { limit: 50 }
+        })
+        setSongsData(data.items)
+        setListLoaded(true)
+      }
+      else if (listType === 'hist') {
+        const { data } = await axios.get('https://api.spotify.com/v1/me/player/recently-played', {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { limit: 50 }
+        })
+        const res = data.items.map(i => i.track)
+        setSongsData(res)
+        setListLoaded(true)
+      }
+    }
+    getSpotifySongList()            // eslint-disable-next-line
+  }, [token, listType, listLoaded]) // songsData should NOT be included in dependency array
+
   return (
     <div className='App'>
-      <header className='App-header'>
-      <Nav className='mt-4 mb-5 align-self-lg-start' fill bg="dark" style= {{width: "100%"}}>
-        <Nav.Item className='d-flex justify-content-start ms-4 col-3' >Spotify Recommendations</Nav.Item>
-        <Nav.Item className='d-flex justify-content-start col-7'>
-        { token !==  'null' && token !== null ?<Username authkey={token} /> : <></>}
-        </Nav.Item>
-        <Nav.Item className='d-flex justify-content-end me-5 col-1'>
-          {token === 'null' || token === null ?
-           <Button variant="primary" href={accAuthUrl} >Log in</Button> :
-            <Button variant="primary" onClick={logout}>Logout</Button>}
-        </Nav.Item>
-    </Nav>
-
-        { token !==  'null' && token !== null ? <SongsList authkey={token}/> : <></>}
-      </header>
+      { token !== 'null' && token !== null ?       // jesli token inny niz null
+        <LoggedIn 
+          authkey={token} 
+          logout={logout} 
+          changeList={changeList} 
+          listType={listType}
+          loadedState={listLoaded}
+          songs={songsData}
+        />                                         // to znaczy ze zalogowany
+        : <LoggedOut loginhref={accAuthUrl}/>      // wpp. niezalogowany - ekran startowy
+      }
     </div>
   );
 }
 
-export default App;
+export default App
