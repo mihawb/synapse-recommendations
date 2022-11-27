@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import json
 import pyodbc
+import random
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -24,7 +25,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 rows.append(list(row))
                 row = cursor.fetchone()
 
-    logging.info(rows)
     cols = ['track_id', 'artists', 'album_name', 'track_name', 'popularity', 'duration_ms', 'explicitlang', 'danceability', 'energy', 'musickey', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo', 'time_signature', 'track_genere']
     queried_songs = pd.DataFrame(rows, columns=cols)
 
@@ -37,8 +37,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     maxi = avg + std*0.3
     param_for_query = pd.DataFrame([mini, maxi], columns=cechy_ilosc)
 
-    cechy_for_query = ['loudness', 'speechiness', 'acousticness', 'instrumentalness']
-    # w ostatecznej wersji chyba chcemy losowe ale teraz dla latwosci sprawdzania
+    # cechy_for_query = ['loudness', 'speechiness', 'acousticness', 'instrumentalness']
+    cechy_for_query = random.choices(cechy_ilosc, k=4)
 
     def getRestParams(lst, df):
         ps = []
@@ -52,8 +52,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     query = f'''SELECT TOP 50 TRACK_ID FROM SPOTIFY_DATA
 WHERE {cechy_for_query[0]} BETWEEN {param_for_query.loc[0, cechy_for_query[0]]} AND {param_for_query.loc[1, cechy_for_query[0]]}
 {getRestParams(cechy_for_query[1:], param_for_query)}
+AND TRACK_ID NOT IN ({ids_for_query_concat})
 '''
-    logging.info(query)
 
     rows = []
     with pyodbc.connect(connection_string) as conn:
