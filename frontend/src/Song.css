@@ -1,0 +1,23 @@
+.song-outer {
+	border: #49505e 1px solid;
+	margin: 10px;
+	display: flex;
+	align-items: center;
+	border-radius: 10px;
+}
+
+.album-cover {
+	height: 100px;
+	margin: 0 10px 0 0;
+	border-radius: 10px;
+}
+
+.primary-info {
+	font-size: large;
+	font-weight: 700;
+}
+
+.secondary-info {
+	font-size: small;
+	opacity: 50%;
+}

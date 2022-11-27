@@ -60,7 +60,8 @@ function App() {
           headers: { Authorization: `Bearer ${token}` },
           params: { limit: 50 }
         })
-        setSongsData(data.items)
+        const res = data.items.map(i => i.track)
+        setSongsData(res)
         setListLoaded(true)
       }
     }
@@ -74,6 +75,7 @@ function App() {
           authkey={token} 
           logout={logout} 
           changeList={changeList} 
+          listType={listType}
           loadedState={listLoaded}
           songs={songsData}
         /> // to znaczy ze zalogowany
