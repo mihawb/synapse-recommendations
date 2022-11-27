@@ -88,8 +88,8 @@ function App() {
         setListLoaded(true)
       }
     }
-    getSpotifySongList()            // eslint-disable-next-line
-  }, [token, listType, listLoaded]) // songsData should NOT be included in dependency array
+    getSpotifySongList() // eslint-disable-next-line
+  }, [token, listType]) // songsData should NOT be included in dependency array
 
   return (
     <div className='App'>
