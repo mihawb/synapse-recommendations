@@ -46,7 +46,28 @@ function App() {
 
   useEffect(() => {
     const getSpotifySongList = async () => {
-      if (listType === 'recs') {}
+      if (listType === 'recs') {
+        const currentIDs = songsData.map(s => s.id) // .join(',')
+
+        console.log(currentIDs.join(','))
+        console.log(token)
+
+        // tutaj tworzenie zapytania z currIDs concat + token 
+        // odpytanie funkcji
+        // dostajemy z powrotem tez IDs concat z przecinkami jak wyzej
+        // rozdzielamy i dla kazdego ID odpytujemy api spotify
+        // czyli nizej nie currIDs tyllko neuIDs
+
+        const res = []
+        for (const ID of currentIDs) {
+          const { data } = await axios.get(`https://api.spotify.com/v1/tracks/${ID}`, {
+          headers: { Authorization: `Bearer ${token}` }
+          })
+          res.push(data)
+        }
+        setSongsData(res)
+        setListLoaded(true)
+      }
       else if (listType === 'tops') {
         const { data } = await axios.get('https://api.spotify.com/v1/me/top/tracks', {
           headers: { Authorization: `Bearer ${token}` },
@@ -66,11 +87,11 @@ function App() {
       }
     }
     getSpotifySongList()
-  }, [token, listType])
+  }, [token, listType]) // songsData should NOT be included in dependency array
 
   return (
     <div className='App'>
-      { token !== 'null' && token !== null ?         // jesli token inny niz null
+      { token !== 'null' && token !== null ?       // jesli token inny niz null
         <LoggedIn 
           authkey={token} 
           logout={logout} 
@@ -78,11 +99,11 @@ function App() {
           listType={listType}
           loadedState={listLoaded}
           songs={songsData}
-        /> // to znaczy ze zalogowany
+        />                                         // to znaczy ze zalogowany
         : <LoggedOut loginhref={accAuthUrl}/>      // wpp. niezalogowany - ekran startowy
       }
     </div>
   );
 }
 
-export default App;
+export default App

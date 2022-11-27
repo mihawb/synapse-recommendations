@@ -1,5 +1,6 @@
 import './SongList.css'
 import Song from './Song'
+import Loading from './Loading'
 
 // listType={props.listType}
 // loadedState={props.loadedState}
@@ -20,7 +21,7 @@ const SongList = (props) => {
             <div className='song-list-inner'>
                 {props.loadedState ?
                     props.songs.map(s => <Song data={s}/>)
-                    : 'trwa ładowanie'
+                    : <Loading/>
                 }
                 
             </div>
