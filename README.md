@@ -1,4 +1,4 @@
-# Synapse Recommendation Engine for Spotify
+# Recommendation Engine for Spotify
 
 Cel projektu 
 ====
