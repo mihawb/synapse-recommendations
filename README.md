@@ -16,7 +16,7 @@ Użytkownik wchodzi na stronę, następnie zostaje przekierowany do strony logow
 
 Architektura
 ====
-![architecture](/img/architecture-diagram.png)
+![architecture](/img/architecture-diagram.jpg)
 
 Skład zespołu
 ====
