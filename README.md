@@ -14,6 +14,7 @@ https://user-images.githubusercontent.com/46073943/206925426-8be40784-f72f-447e-
 * Azure SQL Server  
 * Azure Functions  
 * React 
+* Github Actions for CI/CD
 
 ## Architektura
 ![architecture](https://user-images.githubusercontent.com/46073943/206925579-95c00d1c-77e9-4ae0-bfa5-b0c225752c47.jpg)
