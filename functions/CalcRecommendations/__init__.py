@@ -4,7 +4,6 @@ import numpy as np
 import os
 import json
 import pyodbc
-import random
 
 import polars as pl
 
@@ -101,7 +100,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     )
 
     N = queried_songs.shape[0] * 2 // 5
-    kmeans = KMeans(n_clusters=N, n_init=10, random_state=0)
+    kmeans = KMeans(n_clusters=N, n_init=10)
     kmeans.fit(queried_songs.select(numeric_columns).to_numpy())
 
     songs_centroids = pl.DataFrame(kmeans.cluster_centers_, schema=numeric_columns)
