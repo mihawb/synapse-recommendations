@@ -4,5 +4,6 @@
 
 azure-functions
 pyodbc
-pandas
+polars
 numpy
+scikit-learn

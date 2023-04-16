@@ -1,11 +1,18 @@
 import logging
 import azure.functions as func
 import numpy as np
-import pandas as pd
 import os
 import json
 import pyodbc
 import random
+
+import polars as pl
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+from sklearn.cluster import KMeans
+from sklearn.neighbors import NearestNeighbors
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -13,59 +20,115 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     connection_string = os.getenv('FUNC_TO_DB_CONNECTION_STRING')
     token = req.params.get('token')
+    cols = (
+        'track_id', 'artists', 'album_name', 'track_name', 'popularity','duration_ms',
+        'explicitlang', 'danceability', 'energy', 'musickey', 'loudness', 'mode',
+        'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence',
+        'tempo', 'time_signature', 'track_genre'
+    )
+    numeric_columns = (
+	    'popularity', 'danceability', 'energy', 'musickey', 'loudness', 'mode',
+        'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo'
+    )
+
     ids_for_query = list(map(lambda id: f"'{id}'", req.params.get('ids').split(',')))
     ids_for_query_concat = ','.join(ids_for_query)
 
-    rows = []
-    with pyodbc.connect(connection_string) as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(f"SELECT * FROM SPOTIFY_DATA WHERE TRACK_ID IN ({ids_for_query_concat})")
-            row = cursor.fetchone()
-            while row:
-                rows.append(list(row))
-                row = cursor.fetchone()
+    conn = pyodbc.connect(connection_string)
+    cursor = conn.cursor()
 
-    cols = ['track_id', 'artists', 'album_name', 'track_name', 'popularity', 'duration_ms', 'explicitlang', 'danceability', 'energy', 'musickey', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo', 'time_signature', 'track_genere']
-    queried_songs = pd.DataFrame(rows, columns=cols)
+    cursor.execute(f"SELECT * FROM SONGS_INFO WHERE track_id IN ({ids_for_query_concat})")
+    rows_queried = cursor.fetchall()
+    rows_queried_dict = dict()
+    for i, col in enumerate(cols):
+        rows_queried_dict[col] = [row[i] for row in rows_queried]
+    queried_songs = pl.DataFrame(rows_queried_dict, schema=cols)
 
-    cechy_ilosc = ['popularity', 'duration_ms', 'danceability', 'energy', 'loudness', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo']
-    for_calc = queried_songs[cechy_ilosc]
+    cursor.execute(f"SELECT * FROM SONGS_INFO WHERE track_id IN ({ids_for_query_concat})")
+    rows_queried = cursor.fetchall()
+    rows_queried_dict = dict()
+    for i, col in enumerate(cols):
+            rows_queried_dict[col] = [row[i] for row in rows_queried]
+    queried_songs = pl.DataFrame(rows_queried_dict, schema=cols)
 
-    avg = for_calc.mean()
-    std = for_calc.std()
-    mini = avg - std*0.3
-    maxi = avg + std*0.3
-    param_for_query = pd.DataFrame([mini, maxi], columns=cechy_ilosc)
+    cursor.execute(f"SELECT DISTINCT track_genre FROM SONGS_INFO")
+    rows_genres = [genre[0] for genre in cursor.fetchall()]
+    all_genres = pl.DataFrame({'track_genre': rows_genres})
 
-    # cechy_for_query = ['loudness', 'speechiness', 'acousticness', 'instrumentalness']
-    cechy_for_query = random.choices(cechy_ilosc, k=4)
+    queried_genres = queried_songs[:,'track_genre']
+    queried_genres = pl.concat((
+            queried_genres,
+            all_genres.filter(~pl.col('track_genre').is_in(queried_genres['track_genre']))
+    ))
 
-    def getRestParams(lst, df):
-        ps = []
-        if len(lst) != 0: ps.append('')
-        for c in lst:
-            p = f'{c} BETWEEN {df.loc[0, c]} AND {df.loc[1, c]}'
-            ps.append(p)
+    tfidf_vectorizer = TfidfVectorizer()
+    tfidf_matrix = tfidf_vectorizer.fit_transform(queried_genres.to_numpy().flatten())
 
-        return ' AND '.join(ps)
+    importance = np.zeros((1, tfidf_matrix.shape[0]))
+    for i in range(0, queried_songs.shape[0]):
+            ans = cosine_similarity(tfidf_matrix[i:i+1], tfidf_matrix)
+            importance += ans
 
-    query = f'''SELECT TOP 50 TRACK_ID FROM SPOTIFY_DATA
-WHERE {cechy_for_query[0]} BETWEEN {param_for_query.loc[0, cechy_for_query[0]]} AND {param_for_query.loc[1, cechy_for_query[0]]}
-{getRestParams(cechy_for_query[1:], param_for_query)}
-AND TRACK_ID NOT IN ({ids_for_query_concat})
-'''
+    best_rec_genres = pl.DataFrame({
+            'track_genre': queried_genres['track_genre'],
+            'importance': importance.T.flatten()
+    }).unique()
 
-    rows = []
-    with pyodbc.connect(connection_string) as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(query)
-            row = cursor.fetchone()
-            while row:
-                rows.append(list(row))
-                row = cursor.fetchone()
+    best_rec_genres = best_rec_genres.sort('importance', descending=True)
+    best_rec_genres = best_rec_genres.filter(pl.col('importance') >= 0.8)
 
-    rows = list(map(lambda r: r[0], rows))
-    res = json.dumps(rows)
+    best_rec_genres_concat = ','.join([f"'{genre}'" for genre in best_rec_genres['track_genre']])
+    cursor.execute(f"SELECT * FROM SONGS_INFO WHERE track_genre IN ({best_rec_genres_concat})")
+    rows_relevant_records = cursor.fetchall()
+    relevant_records_dict = dict()
+    for i, col in enumerate(cols):
+            relevant_records_dict[col] = [row[i] for row in rows_relevant_records]
+    relevant_records = pl.DataFrame(relevant_records_dict, schema=cols)
+    relevant_records = relevant_records.filter(~pl.col('track_id').is_in(queried_songs['track_id']))
+
+    relevant_records = relevant_records.with_columns(
+        popularity = pl.col('popularity') / 100,
+        musickey = pl.col('musickey') / 11,
+        loudness = pl.col('loudness') / 60,
+        tempo = pl.col('tempo') / 250
+    )
+
+    queried_songs = queried_songs.with_columns(
+        popularity = pl.col('popularity') / 100,
+        musickey = pl.col('musickey') / 11,
+        loudness = pl.col('loudness') / 60,
+        tempo = pl.col('tempo') / 250
+    )
+
+    N = queried_songs.shape[0] * 2 // 5
+    kmeans = KMeans(n_clusters=N, n_init=10, random_state=0)
+    kmeans.fit(queried_songs.select(numeric_columns).to_numpy())
+
+    songs_centroids = pl.DataFrame(kmeans.cluster_centers_, schema=numeric_columns)
+
+    songs_centroids = songs_centroids.with_columns(
+        popularity = pl.col('popularity') * 100,
+        musickey = pl.col('musickey') * 11,
+        loudness = pl.col('loudness') * 60,
+        tempo = pl.col('tempo') * 250
+    )
+
+    neigh = NearestNeighbors(n_neighbors=3)
+    neigh.fit(relevant_records.select(numeric_columns).to_numpy())
+
+    distances, indices = neigh.kneighbors(queried_songs.select(numeric_columns).to_numpy())
+
+    distances = distances.flatten()
+    indices = indices.flatten()
+
+    proposed = pl.DataFrame({
+        'distances': distances,
+        'indices': indices
+    })
+
+    proposed = proposed.sort('distances', descending=True)
+    recommendations = relevant_records[proposed['indices'].head(30),:]
+    res = json.dumps(recommendations['track_id'].to_list())
 
     if res == []:
         return func.HttpResponse(json.dumps({'error': 'nic nie znaleziono'}), status_code=200)
